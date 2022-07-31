@@ -9,30 +9,30 @@ public class Solver {
     public Solution solve(Graph graph) {
         Solution s = new Solution(graph);
 
-        double maxObj = 0;
-        int maxObjIter = -1;
-
-        double currObj = 10;
+        double optObj = Double.NEGATIVE_INFINITY;
+        int optIter = -1;
+        double currObj = 0;
         int currIter = 0;
         int godMode = 0;
         int threshold = graph.getNumEdge() / 10;
 
-        while(currObj > maxObj || godMode < threshold) {
+        while(currObj > optObj || godMode < threshold) {
             Problem p = new Problem(s, currIter);
 
-            getEdgesWithHighBetw(s, p);
+            getEdgesToKill(s, p);
             killEdges(s, p);
             calcMod(s, p);
             currObj = p.getMod();
 
-            if (maxObjIter <= currObj) {
-                maxObjIter = currIter;
-                maxObj = currObj;
+            if (optIter <= currObj) {
+                optIter = currIter;
+                optObj = currObj;
+                s.setOptCommunitiesSet(p.getCommunitiesSet());
             } else {
                 godMode++;
             }
 
-            s.addIter(p);
+            s.addResult(p, optIter);
 
             currIter++;
         }
@@ -40,20 +40,22 @@ public class Solver {
         return s;
     }
 
-    public void getEdgesWithHighBetw(Solution s, Problem p) {
+    //<editor-fold desc="Calculate betweenness">
+    public void getEdgesToKill(Solution s, Problem p) {
         calcBetw(s, p);
 
-        double[] currBetw = p.getBetw();
         double max = 0;
-        for (double v : currBetw) {
-            if (max < v) {
-                max = v;
+        for (int edge = 0; edge < s.getNumEdge(); edge++) {
+            double currBetw = p.getBetw(edge);
+
+            if (max < currBetw) {
+                max = currBetw;
             }
         }
 
         Set<Integer> edgesToKill = new HashSet<>();
-        for (int edge = 0; edge < currBetw.length; edge++) {
-            if (currBetw[edge] == max) {
+        for (int edge = 0; edge < s.getNumEdge(); edge++) {
+            if (p.getBetw(edge) == max) {
                 edgesToKill.add(edge);
             }
         }
@@ -62,16 +64,15 @@ public class Solver {
     }
 
     private void calcBetw(Solution s, Problem p) {
-        for (int vert = 0; vert < s.getNumVert(); vert++) {
-            incBetwViaBFS(vert, s, p);
+        for (int node = 0; node < s.getNumVert(); node++) {
+            incFlowAndBetwViaBFS(node, s, p);
         }
     }
 
-    private void incBetwViaBFS(int start, Solution s, Problem p) {
+    private void incFlowAndBetwViaBFS(int src, Solution s, Problem p) {
         p.resetFlowsData();
-        Map<Integer, FlowData> flowsData = p.getFlowsData();
+        FlowData flowSrc = new FlowData(src);
 
-        FlowData flowSrc = new FlowData(start);
         Queue<FlowData> pathQueue = new LinkedList<>();
         pathQueue.add(flowSrc);
 
@@ -82,18 +83,19 @@ public class Solver {
             flowStack.add(curr);
 
             curr.populateDownstream(s, p);
-            curr.incDownstreamPaths(p);
+            curr.updateDownstream(p);
 
             for (int d : curr.getDownstream()) {
-                pathQueue.add(flowsData.get(d));
+                pathQueue.add(p.getFlowData(d));
             }
         }
 
         while (!flowStack.isEmpty()) {
             FlowData flowData = flowStack.pop();
-            flowData.incUpstreamFlow(s, p);
+            flowData.incUpstreamFlowAndBetw(s, p);
         }
     }
+    //</editor-fold>
 
     public void killEdges(Solution s, Problem p) {
         Set<Integer> edgesToKill = p.getEdgesToKill();
@@ -119,7 +121,6 @@ public class Solver {
         for (int node = 0; node < s.getNumVert(); node++) {
             if (!p.isInComm(node)) {
                 HashSet<Integer> visited = new HashSet<>();
-
                 int currComm = p.initNewComm();
 
                 Queue<Integer> bfsQueue = new LinkedList<>();
@@ -131,7 +132,7 @@ public class Solver {
 
                     p.putInComm(currComm, currNode);
 
-                    Set<Integer> neighbors = s.getNeighbors(currNode);
+                    Set<Integer> neighbors = s.getNeighborsOf(currNode);
                     for (int n : neighbors) {
                         if (!visited.contains(n)
                                 && s.getEdgeData(currNode, n).isAlive()) {
@@ -147,7 +148,7 @@ public class Solver {
         int m = s.getNumEdge();
 
         double val = s.areNeighbors(node1, node2) ? 1.0 : 0.0;
-        val -= (s.getNumNeighbors(node1) * s.getNumNeighbors(node2)) / (2.0 * m);
+        val -= (s.getNumNeighborsOf(node1) * s.getNumNeighborsOf(node2)) / (2.0 * m);
         val /= (2.0 * m);
 
         p.incMod(val);

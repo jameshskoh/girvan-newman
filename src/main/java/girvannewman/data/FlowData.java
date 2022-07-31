@@ -2,9 +2,7 @@ package girvannewman.data;
 
 import girvannewman.Problem;
 import girvannewman.Solution;
-import graph.VertexPair;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -27,7 +25,7 @@ public class FlowData {
     public void populateDownstream(Solution s, Problem p) {
         Map<Integer, FlowData> flowsData = p.getFlowsData();
 
-        Set<Integer> nodeNeighbors = s.getNeighbors(node);
+        Set<Integer> nodeNeighbors = s.getNeighborsOf(node);
 
         for (int n : nodeNeighbors) {
             if (!upstream.contains(n)) {
@@ -39,10 +37,11 @@ public class FlowData {
         }
     }
 
-    public void incDownstreamPaths(Problem p) {
+    public void updateDownstream(Problem p) {
         for (int d : downstream) {
-            Map<Integer, FlowData> flowsData = p.getFlowsData();
-            flowsData.get(d).incPathCount(pathCount);
+            FlowData downData = p.getFlowData(d);
+            downData.incPathCount(pathCount);
+            downData.addUpstream(node);
         }
     }
 
@@ -50,11 +49,15 @@ public class FlowData {
         pathCount += inc;
     }
 
-    public void incUpstreamFlow(Solution s, Problem p) {
+    private void addUpstream(int node) {
+        upstream.add(node);
+    }
+
+    public void incUpstreamFlowAndBetw(Solution s, Problem p) {
         double proportion = calcProportion();
 
         for (int u : upstream) {
-            FlowData upFlow = p.getFlowsData().get(u);
+            FlowData upFlow = p.getFlowData(u);
             double inc = proportion * upFlow.pathCount;
             upFlow.incFlowCount(inc);
             p.incBetw(node, u, inc, s);

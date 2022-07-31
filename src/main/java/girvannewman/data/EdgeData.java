@@ -9,7 +9,7 @@ public class EdgeData {
     private boolean alive;
     private int iterKilled;
 
-    public EdgeData(int edgeIndex, int node1, int node2) {
+    public EdgeData(int node1, int node2, int edgeIndex) {
         // node order, node equal throw
 
         this.edgeIndex = edgeIndex;

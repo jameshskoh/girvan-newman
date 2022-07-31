@@ -7,18 +7,16 @@ import java.util.*;
 public class Problem {
     private final int iter;
     private final double[] betw;
-    private Map<Integer, FlowData> flowsData;
-    private Set<Integer> edgesToKill;
     private final Map<Integer, Integer> vertCommunity;
     private final Map<Integer, Set<Integer>> communitiesSet;
+    private Map<Integer, FlowData> flowsData;
+    private Set<Integer> edgesToKill;
     private double mod;
-
 
     public Problem(Solution s, int iter) {
         this.iter = iter;
 
         betw = new double[s.getNumEdge()];
-        Arrays.fill(betw, -1);
 
         vertCommunity = new HashMap<>();
         communitiesSet = new HashMap<>();
@@ -28,8 +26,8 @@ public class Problem {
         return iter;
     }
 
-    public double[] getBetw() {
-        return betw;
+    public double getBetw(int edge) {
+        return betw[edge];
     }
 
     public void incBetw(int node1, int node2, double inc, Solution s) {
@@ -51,6 +49,10 @@ public class Problem {
 
     public Map<Integer, FlowData> getFlowsData() {
         return flowsData;
+    }
+
+    public FlowData getFlowData(int node) {
+        return flowsData.get(node);
     }
 
     public boolean isInComm(int node) {

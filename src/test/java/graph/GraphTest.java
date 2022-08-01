@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class GraphTest {
     @Test
-    void ctor_ShouldBeEmptyAndCountsZero() {
+    void ctor_shouldBeEmptyAndCountsZero() {
         Graph g = new Graph();
         assertEquals(0, g.getNumVertex());
         assertEquals(0, g.getNumEdge());
@@ -19,7 +19,7 @@ class GraphTest {
     }
 
     @Test
-    void addVertexShouldIncreaseVertexCount() {
+    void addVertex_shouldIncreaseVertexCount() {
         Graph g = new Graph();
         Map<Integer, Set<Integer>> n;
 
@@ -43,43 +43,7 @@ class GraphTest {
     }
 
     @Test
-    void addVertexRepeatedlyShouldOnlyCountOnce() {
-        Graph g = new Graph();
-        Map<Integer, Set<Integer>> n;
-
-        g.addVertex(1);
-        assertEquals(1, g.getNumVertex());
-        assertEquals(0, g.getNumEdge());
-        n = g.exportGraph();
-        assertEquals(1, n.size());
-
-        g.addVertex(2);
-        assertEquals(2, g.getNumVertex());
-        assertEquals(0, g.getNumEdge());
-        n = g.exportGraph();
-        assertEquals(2, n.size());
-
-        g.addVertex(2);
-        assertEquals(2, g.getNumVertex());
-        assertEquals(0, g.getNumEdge());
-        n = g.exportGraph();
-        assertEquals(2, n.size());
-
-        g.addVertex(3);
-        assertEquals(3, g.getNumVertex());
-        assertEquals(0, g.getNumEdge());
-        n = g.exportGraph();
-        assertEquals(3, n.size());
-
-        g.addVertex(2);
-        assertEquals(3, g.getNumVertex());
-        assertEquals(0, g.getNumEdge());
-        n = g.exportGraph();
-        assertEquals(3, n.size());
-    }
-
-    @Test
-    void addedVertexShouldExistAndHaveNoNeighbor() {
+    void addVertex_vertexShouldExistAndHaveNoNeighbor() {
         Graph g = new Graph();
         Map<Integer, Set<Integer>> n;
 
@@ -108,7 +72,53 @@ class GraphTest {
     }
 
     @Test
-    void addEdgeShouldIncreaseEdgeCount() {
+    void addVertex_repeatedCallsShouldCountOnce() {
+        Graph g = new Graph();
+        Map<Integer, Set<Integer>> n;
+
+        g.addVertex(1);
+        assertEquals(1, g.getNumVertex());
+        assertEquals(0, g.getNumEdge());
+        n = g.exportGraph();
+        assertEquals(1, n.size());
+
+        g.addVertex(2);
+        assertEquals(2, g.getNumVertex());
+        assertEquals(0, g.getNumEdge());
+        n = g.exportGraph();
+        assertEquals(2, n.size());
+
+        g.addVertex(2);
+        assertEquals(2, g.getNumVertex());
+        assertEquals(0, g.getNumEdge());
+        n = g.exportGraph();
+        assertEquals(2, n.size());
+
+        g.addVertex(3);
+        assertEquals(3, g.getNumVertex());
+        assertEquals(0, g.getNumEdge());
+        n = g.exportGraph();
+        assertEquals(3, n.size());
+
+        g.addVertex(2);
+        assertEquals(3, g.getNumVertex());
+        assertEquals(0, g.getNumEdge());
+        n = g.exportGraph();
+        assertEquals(3, n.size());
+    }
+
+    @Test
+    void addVertex_negativeNumShouldThrowIAE() {
+        Graph g = new Graph();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> {
+                    g.addVertex(-1);
+                });
+    }
+
+    @Test
+    void addEdge_shouldIncreaseEdgeCount() {
         Graph g = new Graph();
 
         g.addVertex(0);
@@ -135,47 +145,7 @@ class GraphTest {
     }
 
     @Test
-    void addEdgeRepeatedlyShouldOnlyCountOnce() {
-        Graph g = new Graph();
-        Map<Integer, Set<Integer>> n;
-
-        g.addVertex(0);
-        g.addVertex(1);
-        g.addVertex(2);
-
-        g.addEdge(0, 1);
-        n = g.exportGraph();
-        assertTrue(n.get(0).contains(1));
-        assertTrue(n.get(1).contains(0));
-        assertEquals(1, g.getNumEdge());
-
-        g.addEdge(0, 2);
-        n = g.exportGraph();
-        assertTrue(n.get(0).contains(2));
-        assertTrue(n.get(2).contains(0));
-        assertEquals(2, g.getNumEdge());
-
-        g.addEdge(0, 1);
-        n = g.exportGraph();
-        assertTrue(n.get(0).contains(1));
-        assertTrue(n.get(1).contains(0));
-        assertEquals(2, g.getNumEdge());
-
-        g.addEdge(1, 2);
-        n = g.exportGraph();
-        assertTrue(n.get(1).contains(2));
-        assertTrue(n.get(2).contains(1));
-        assertEquals(3, g.getNumEdge());
-
-        g.addEdge(0, 1);
-        n = g.exportGraph();
-        assertTrue(n.get(0).contains(1));
-        assertTrue(n.get(1).contains(0));
-        assertEquals(3, g.getNumEdge());
-    }
-
-    @Test
-    void addAnEdgeShouldUpdateBothNeighbors() {
+    void addEdge_shouldUpdateBothNodeNeighbors() {
         Graph g = new Graph();
         Map<Integer, Set<Integer>> n;
 
@@ -194,7 +164,7 @@ class GraphTest {
     }
 
     @Test
-    void addEdgeShouldInsertCorrectNeighbor() {
+    void addEdge_shouldInsertCorrectNeighbor() {
         Graph g = new Graph();
 
         g.addVertex(0);
@@ -278,5 +248,75 @@ class GraphTest {
         assertTrue(currSet.contains(3));
         assertFalse(currSet.contains(4));
         assertFalse(currSet.contains(5));
+    }
+
+    @Test
+    void addEdge_repeatedCallsShouldOnlyCountOnce() {
+        Graph g = new Graph();
+        Map<Integer, Set<Integer>> n;
+
+        g.addVertex(0);
+        g.addVertex(1);
+        g.addVertex(2);
+
+        g.addEdge(0, 1);
+        n = g.exportGraph();
+        assertTrue(n.get(0).contains(1));
+        assertTrue(n.get(1).contains(0));
+        assertEquals(1, g.getNumEdge());
+
+        g.addEdge(0, 2);
+        n = g.exportGraph();
+        assertTrue(n.get(0).contains(2));
+        assertTrue(n.get(2).contains(0));
+        assertEquals(2, g.getNumEdge());
+
+        g.addEdge(0, 1);
+        n = g.exportGraph();
+        assertTrue(n.get(0).contains(1));
+        assertTrue(n.get(1).contains(0));
+        assertEquals(2, g.getNumEdge());
+
+        g.addEdge(1, 2);
+        n = g.exportGraph();
+        assertTrue(n.get(1).contains(2));
+        assertTrue(n.get(2).contains(1));
+        assertEquals(3, g.getNumEdge());
+
+        g.addEdge(0, 1);
+        n = g.exportGraph();
+        assertTrue(n.get(0).contains(1));
+        assertTrue(n.get(1).contains(0));
+        assertEquals(3, g.getNumEdge());
+    }
+
+    @Test
+    void addEdge_negativeNumShouldThrowIAE() {
+        Graph g = new Graph();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> {
+                    g.addEdge(-1, 1);
+                });
+
+        assertThrows(IllegalArgumentException.class,
+                () -> {
+                    g.addEdge(1, -1);
+                });
+
+        assertThrows(IllegalArgumentException.class,
+                () -> {
+                    g.addEdge(-1, -1);
+                });
+    }
+
+    @Test
+    void addEdge_twoEqualNodesShouldThrowIAE() {
+        Graph g = new Graph();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> {
+                    g.addEdge(2, 2);
+                });
     }
 }

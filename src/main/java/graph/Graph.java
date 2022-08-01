@@ -12,6 +12,11 @@ public class Graph {
     }
 
     public void addVertex(int num) {
+        if (num < 0) {
+            String msg = String.format("Node index cannot be negative, %d received instead.", num);
+            throw new IllegalArgumentException(msg);
+        }
+
         if (neighborsSet.containsKey(num))
             return;
 
@@ -21,6 +26,16 @@ public class Graph {
     }
 
     public void addEdge(int from, int to) {
+        if (from < 0 || to < 0) {
+            String msg = String.format("Node index cannot be negative, %d and %d received instead.", from, to);
+            throw new IllegalArgumentException(msg);
+        }
+
+        if (from == to) {
+            String msg = String.format("From node and to node must not be the same, %d received instead.", from );
+            throw new IllegalArgumentException(msg);
+        }
+
         if (neighborsSet.get(from).contains(to))
             return;
 

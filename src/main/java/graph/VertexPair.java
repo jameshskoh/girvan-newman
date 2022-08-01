@@ -16,11 +16,12 @@ public class VertexPair {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         VertexPair that = (VertexPair) o;
-        return vert1 == that.vert1 && vert2 == that.vert2;
+        return (vert1 == that.vert1 && vert2 == that.vert2)
+                || (vert1 == that.vert2 && vert2 == that.vert1);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(vert1, vert2);
+        return Objects.hash(vert1 + vert2);
     }
 }

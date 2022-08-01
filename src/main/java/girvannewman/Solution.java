@@ -7,7 +7,7 @@ import graph.VertexPair;
 import java.util.*;
 
 public class Solution {
-    private final Set<Integer>[] neighborsSet;
+    private final Map<Integer, Set<Integer>> neighborsSet;
     private final int numVert;
     private final int numEdge;
     private final Map<VertexPair, Integer> vertToEdge;
@@ -28,7 +28,7 @@ public class Solution {
 
         int edge = 0;
         for (int node = 0; node < numVert; node++) {
-            Set<Integer> neighbors = neighborsSet[node];
+            Set<Integer> neighbors = neighborsSet.get(node);
 
             for (int neighbor : neighbors) {
                 if(!hasEdge(node, neighbor)) {
@@ -86,7 +86,7 @@ public class Solution {
     }
 
     public Set<Integer> getNeighborsOf(int node) {
-        return neighborsSet[node];
+        return neighborsSet.get(node);
     }
 
     public int getNumNeighborsOf(int node) {

@@ -10,7 +10,17 @@ public class EdgeData {
     private int iterKilled;
 
     public EdgeData(int node1, int node2, int edgeIndex) {
-        // node order, node equal throw
+        if (node1 < 0 || node2 < 0 || edgeIndex < 0) {
+            String msg = String.format("Indices must be non-negative, received %d, %d, %d instead.",
+                    node1, node2, edgeIndex);
+            throw new IllegalArgumentException(msg);
+        }
+
+        if (node1 == node2) {
+            String msg = String.format("Node index must not be equal, received %d instead.",
+                    node1);
+            throw new IllegalArgumentException(msg);
+        }
 
         this.edgeIndex = edgeIndex;
         endpoints = new VertexPair(node1, node2);
@@ -20,7 +30,11 @@ public class EdgeData {
     }
 
     public void kill(int iter) {
-        // iter nonpositive throw
+        if (iter <= 0) {
+            String msg = String.format("Iteration must be non-negative, received %d instead.",
+                    iter);
+            throw new IllegalArgumentException(msg);
+        }
 
         alive = false;
         iterKilled = iter;

@@ -25,7 +25,7 @@ class GraphLoaderTest {
 
     @ParameterizedTest
     @MethodSource("values")
-    void importedGraphShouldHaveCorrectNumbers(String file, int numVert, int numEdge) {
+    void loadGraph_shouldHaveCorrectNumbers(String file, int numVert, int numEdge) {
         Graph g = new Graph();
 
         try {
@@ -50,7 +50,7 @@ class GraphLoaderTest {
     }
 
     @Test
-    void missingFileShouldThrowFNF() {
+    void loadGraph_missingFileShouldThrowFNFE() {
         Graph g = new Graph();
 
         assertThrows(FileNotFoundException.class,

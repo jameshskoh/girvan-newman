@@ -6,6 +6,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Map;
 import java.util.Set;
@@ -17,6 +18,7 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 class GraphLoaderTest {
     static Stream<Arguments> values() {
         return Stream.of(
+                arguments("data/small1.edge", 8, 9),
                 arguments("data/dolphins.edge", 62, 159),
                 arguments("data/karate.edge", 34, 78),
                 arguments("data/facebook_ucsd.edge", 14948, 443221)
@@ -45,6 +47,7 @@ class GraphLoaderTest {
 
             assertEquals(numEdge, total / 2);
         } catch (Exception e) {
+            e.printStackTrace();
             fail("Should not throw exception.");
         }
     }
@@ -55,7 +58,7 @@ class GraphLoaderTest {
 
         assertThrows(FileNotFoundException.class,
                 () -> {
-                    GraphLoader.loadGraph(g, "nonexistent.edge");
+                    GraphLoader.loadGraph(g, "asdf.edge");
                 });
     }
 }

@@ -4,16 +4,25 @@ import graph.Graph;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.net.URL;
 import java.util.HashSet;
 import java.util.Scanner;
 import java.util.Set;
 
 public class GraphLoader {
-    public static void loadGraph(Graph g, String filename) throws FileNotFoundException {
+    public static void loadGraph(Graph g, String fileName) throws FileNotFoundException {
         Set<Integer> seen = new HashSet<>();
         Scanner sc;
 
-        sc = new Scanner(new File(filename));
+        URL temp = GraphLoader.class.getClassLoader().getResource(fileName);
+
+        if (temp == null) {
+            throw new FileNotFoundException(fileName);
+        }
+
+        File file = new File(temp.getPath());
+
+        sc = new Scanner(file);
 
         while (sc.hasNextInt()) {
             int v1 = sc.nextInt();

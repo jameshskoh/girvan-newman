@@ -1,8 +1,8 @@
 package girvannewman.data;
 
-import girvannewman.Problem;
-import girvannewman.Solution;
+import graph.VertexPair;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -19,33 +19,32 @@ public class FlowData {
         upstream = new HashSet<>();
         downstream = new HashSet<>();
         pathCount = 0;
-        flowCount = 1.0;
+        flowCount = 0.0;
     }
 
-    public void populateDownstream(Solution s, Problem p) {
-        Map<Integer, FlowData> flowsData = p.getFlowsData();
-
-        Set<Integer> nodeNeighbors = s.getNeighborsOf(node);
-
+    public void populateDownstream(Map<Integer, FlowData> flowsData, Set<Integer> nodeNeighbors) {
         for (int n : nodeNeighbors) {
             if (!upstream.contains(n)) {
                 downstream.add(n);
 
                 FlowData fd = new FlowData(n);
-                flowsData.put(n, fd);
+
+                if (!flowsData.containsKey(n)) {
+                    flowsData.put(n, fd);
+                }
             }
         }
     }
 
-    public void updateDownstream(Problem p) {
+    public void updateDownstream(Map<Integer, FlowData> flowsData) {
         for (int d : downstream) {
-            FlowData downData = p.getFlowData(d);
+            FlowData downData = flowsData.get(d);
             downData.incPathCount(pathCount);
             downData.addUpstream(node);
         }
     }
 
-    private void incPathCount(int inc) {
+    public void incPathCount(int inc) {
         pathCount += inc;
     }
 
@@ -53,15 +52,26 @@ public class FlowData {
         upstream.add(node);
     }
 
-    public void incUpstreamFlowAndBetw(Solution s, Problem p) {
+    public Map<VertexPair, Double> incUpstreamFlow(Map<Integer, FlowData> flowsData) {
+        Map<VertexPair, Double> betwInc = new HashMap<>();
+
+        if (upstream.size() != 0) { // this is not root node, add 1 flow to self
+            incFlowCount(1.0);
+        } else {
+            return betwInc;
+        }
+
         double proportion = calcProportion();
 
         for (int u : upstream) {
-            FlowData upFlow = p.getFlowData(u);
+            FlowData upFlow = flowsData.get(u);
             double inc = proportion * upFlow.pathCount;
             upFlow.incFlowCount(inc);
-            p.incBetw(node, u, inc, s);
+
+            betwInc.put(new VertexPair(node, u), inc);
         }
+
+        return betwInc;
     }
 
     private double calcProportion() {
@@ -78,5 +88,17 @@ public class FlowData {
 
     public Set<Integer> getDownstream() {
         return downstream;
+    }
+
+    public Set<Integer> getUpstream() {
+        return upstream;
+    }
+
+    public int getPathCount() {
+        return pathCount;
+    }
+
+    public double getFlowCount() {
+        return flowCount;
     }
 }

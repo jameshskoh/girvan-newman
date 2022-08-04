@@ -1,6 +1,7 @@
 package girvannewman.data;
 
 import graph.VertexPair;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -24,6 +25,12 @@ class FlowDataTest {
         assertEquals(0, fd.getDownstream().size());
         assertEquals(0, fd.getPathCount());
         assertEquals(0.0, fd.getFlowCount(), EPSILON);
+    }
+
+    @Test
+    void ctor_negativeValueShouldThrowIAE() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new FlowData(-1));
     }
 
     static Stream<Arguments> data() {

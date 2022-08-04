@@ -15,6 +15,13 @@ public class FlowData {
     private double flowCount;
 
     public FlowData(int node) {
+        if (node < 0) {
+            String msg = String.format(
+                    "Node must be non-negative, received %d instead",
+                    node);
+            throw new IllegalArgumentException(msg);
+        }
+
         this.node = node;
         upstream = new HashSet<>();
         downstream = new HashSet<>();

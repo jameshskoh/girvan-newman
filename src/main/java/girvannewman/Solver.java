@@ -1,38 +1,46 @@
 package girvannewman;
 
+import girvannewman.data.EdgeData;
 import girvannewman.data.FlowData;
 import graph.Graph;
+import graph.VertexPair;
 
 import java.util.*;
 
 public class Solver {
-    public Solution solve(Graph graph) {
+    public Solution solve(Graph graph, int threshold) {
+        System.out.println("Solver started");
+
         Solution s = new Solution(graph);
 
         double optObj = Double.NEGATIVE_INFINITY;
-        int optIter = -1;
         double currObj = 0;
-        int currIter = 0;
+        int currIter = 1;
         int godMode = 0;
-        int threshold = graph.getNumEdge() / 10;
 
-        while(currObj > optObj || godMode < threshold) {
-            Problem p = new Problem(s, currIter);
+        System.out.println("Iteration started.");
+
+        while (currObj >= optObj || godMode < threshold) {
+            if (currIter % 10 == 0) {
+                String msg = String.format("Now on iteration %d \t obj = %f \t opt = %f", currIter, currObj, optObj);
+                System.out.println(msg);
+            }
+
+            Problem p = new Problem(s.getNumEdge(), currIter);
 
             getEdgesToKill(s, p);
             killEdges(s, p);
             calcMod(s, p);
             currObj = p.getMod();
 
-            if (optIter <= currObj) {
-                optIter = currIter;
+            s.addResultAndSetOpt(p.getMod(), p.getEdgesToKill());
+
+            if (optObj <= currObj) {
                 optObj = currObj;
-                s.setOptCommunitiesSet(p.getCommunitiesSet());
+                s.setOptCommSets(p.getCommunitiesSet());
             } else {
                 godMode++;
             }
-
-            s.addResult(p, optIter);
 
             currIter++;
         }
@@ -71,19 +79,35 @@ public class Solver {
 
     private void incFlowAndBetwViaBFS(int src, Solution s, Problem p) {
         p.resetFlowsData();
-        FlowData flowSrc = new FlowData(src);
+
+        FlowData flowSrc = new FlowData(src, 1);
+        flowSrc.incPathCount(1);
+
+        Map<Integer, FlowData> flowsData = p.getFlowsData();
+        flowsData.put(src, flowSrc);
 
         Queue<FlowData> pathQueue = new LinkedList<>();
         pathQueue.add(flowSrc);
+
+        Set<Integer> visited = new HashSet<>();
 
         Stack<FlowData> flowStack = new Stack<>();
 
         while (!pathQueue.isEmpty()) {
             FlowData curr = pathQueue.poll();
+
+            if (!visited.contains(curr.getNode())) {
+                visited.add(curr.getNode());
+            } else {
+                continue;
+            }
+
             flowStack.add(curr);
 
-            curr.populateDownstream(s, p);
-            curr.updateDownstream(p);
+            Set<Integer> nodeNeighbors = s.getNeighborsOf(curr.getNode());
+
+            curr.populateDownstream(flowsData, nodeNeighbors, s.getSeveredPairs());
+            curr.updateDownstream(flowsData);
 
             for (int d : curr.getDownstream()) {
                 pathQueue.add(p.getFlowData(d));
@@ -92,7 +116,13 @@ public class Solver {
 
         while (!flowStack.isEmpty()) {
             FlowData flowData = flowStack.pop();
-            flowData.incUpstreamFlowAndBetw(s, p);
+
+            Map<VertexPair, Double> betwInc = flowData.incUpstreamFlow(flowsData);
+
+            for (VertexPair vp : betwInc.keySet()) {
+                int edge = s.getEdge(vp);
+                p.incBetw(edge, betwInc.get(vp));
+            }
         }
     }
     //</editor-fold>
@@ -101,7 +131,11 @@ public class Solver {
         Set<Integer> edgesToKill = p.getEdgesToKill();
 
         for (int edge : edgesToKill) {
+            EdgeData ed = s.getEdgeData(edge);
+            VertexPair vp = ed.getEndpoints();
+
             s.getEdgeData(edge).kill(p.getIter());
+            s.addSeveredPairs(vp);
         }
     }
 
@@ -145,6 +179,10 @@ public class Solver {
     }
 
     private void calcModIter(int node1, int node2, Solution s, Problem p) {
+        if (node1 == node2) {
+            return;
+        }
+
         int m = s.getNumEdge();
 
         double val = s.areNeighbors(node1, node2) ? 1.0 : 0.0;

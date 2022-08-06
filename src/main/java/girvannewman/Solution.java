@@ -15,6 +15,8 @@ public class Solution {
 
     private final List<Double> objList;
     private int optIter;
+
+    private final Set<VertexPair> severedPairs;
     private final List<Set<Integer>> killedEdgeList;
     private Map<Integer, Set<Integer>> optCommunitiesSet;
 
@@ -42,6 +44,7 @@ public class Solution {
         objList = new ArrayList<>();
         objList.add(0.0);
 
+        severedPairs = new HashSet<>();
         killedEdgeList = new ArrayList<>();
         killedEdgeList.add(new HashSet<>());
     }
@@ -55,15 +58,39 @@ public class Solution {
     private void addEdgesData(int node1, int node2, int edgeIndex) {
         edgesData[edgeIndex] = new EdgeData(node1, node2, edgeIndex);
     }
+    //</editor-fold>
+
+    public Set<Integer> getNeighborsOf(int node) {
+        if (!hasNode(node)) {
+            String msg = String.format("Node %d does not exist.", node);
+            throw new IllegalArgumentException(msg);
+        }
+
+        return neighborsSet.get(node);
+    }
+
+    public int getNumNeighborsOf(int node) {
+        return getNeighborsOf(node).size();
+    }
+
+    public boolean areNeighbors(int node1, int node2) {
+        if (!hasNode(node1)) {
+            return false;
+        }
+
+        return getNeighborsOf(node1).contains(node2);
+    }
+
+    private boolean hasNode(int node) {
+        return neighborsSet.containsKey(node);
+    }
 
     public boolean hasEdge(int node1, int node2) {
         VertexPair vp = new VertexPair(node1, node2);
         return vertToEdge.containsKey(vp);
     }
-    //</editor-fold>
 
-    public int getEdge(int node1, int node2) {
-        VertexPair vp = new VertexPair(node1, node2);
+    public int getEdge(VertexPair vp) {
         return vertToEdge.get(vp);
     }
 
@@ -73,7 +100,7 @@ public class Solution {
 
     public EdgeData getEdgeData(int node1, int node2) {
         VertexPair vp = new VertexPair(node1, node2);
-        int edge = vertToEdge.get(vp);
+        int edge = getEdge(vp);
         return edgesData[edge];
     }
 
@@ -85,44 +112,33 @@ public class Solution {
         return numEdge;
     }
 
-    public Set<Integer> getNeighborsOf(int node) {
-        return neighborsSet.get(node);
-    }
-
-    public int getNumNeighborsOf(int node) {
-        return getNeighborsOf(node).size();
-    }
-
-    public boolean areNeighbors(int node1, int node2) {
-        return getNeighborsOf(node1).contains(node2);
-    }
-
     //<editor-fold desc="End of iteration methods">
-    public void addResult(Problem p, int maxObjIter) {
-        addObj(p.getMod());
-        addKilledEdge(p.getEdgesToKill());
-        setOptIter(maxObjIter);
-    }
+    public void addResultAndSetOpt(double obj, Set<Integer> killedEdges) {
+        if (killedEdges == null) {
+            throw new NullPointerException("Killed edges set is null.");
+        }
 
-    private void addObj(double obj) {
         objList.add(obj);
+
+        if (obj >= objList.get(optIter)) {
+            optIter = objList.size() - 1;
+        }
+
+        addKilledEdge(killedEdges);
     }
 
-    private void addKilledEdge(Set<Integer> killedEdges) {
-        killedEdgeList.add(killedEdges);
+    public void setOptCommSets(Map<Integer, Set<Integer>> optCommSet) {
+        if (optCommSet == null) {
+            throw new NullPointerException("Optimal communities set is null.");
+        }
+
+        optCommunitiesSet = optCommSet;
     }
 
-    private void setOptIter(int optIter) {
-        this.optIter = optIter;
+    public Map<Integer, Set<Integer>> getOptCommSets() {
+        return optCommunitiesSet;
     }
 
-    public void setOptCommunitiesSet(Map<Integer, Set<Integer>> optCommunitiesSet) {
-        this.optCommunitiesSet = optCommunitiesSet;
-    }
-
-    //</editor-fold>
-
-    //<editor-fold desc="Result getters">
     public List<Double> getObjList() {
         return objList;
     }
@@ -131,14 +147,20 @@ public class Solution {
         return optIter;
     }
 
+    public void addSeveredPairs(VertexPair vp) {
+        severedPairs.add(vp);
+    }
+
+    public Set<VertexPair> getSeveredPairs() {
+        return severedPairs;
+    }
+
+    private void addKilledEdge(Set<Integer> killedEdges) {
+        killedEdgeList.add(killedEdges);
+    }
+
     public List<Set<Integer>> getKilledEdgeList() {
         return killedEdgeList;
     }
-
-    public Map<Integer, Set<Integer>> getOptCommunitiesSet() {
-        return optCommunitiesSet;
-    }
-
     //</editor-fold>
-
 }

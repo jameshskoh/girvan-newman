@@ -1,7 +1,6 @@
 package girvannewman;
 
 import girvannewman.data.FlowData;
-import graph.Graph;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -156,10 +155,10 @@ class ProblemTest {
 
         assertTrue(flowsData.isEmpty());
 
-        flowsData.put(0, new FlowData(0));
-        flowsData.put(1, new FlowData(1));
-        flowsData.put(3, new FlowData(3));
-        flowsData.put(5, new FlowData(5));
+        flowsData.put(0, new FlowData(0, 1));
+        flowsData.put(1, new FlowData(1, 1));
+        flowsData.put(3, new FlowData(3, 1));
+        flowsData.put(5, new FlowData(5, 1));
 
         assertEquals(0, p.getFlowData(0).getNode());
         assertEquals(1, p.getFlowData(1).getNode());
@@ -176,10 +175,10 @@ class ProblemTest {
 
         assertTrue(flowsData.isEmpty());
 
-        flowsData.put(0, new FlowData(0));
-        flowsData.put(1, new FlowData(1));
-        flowsData.put(3, new FlowData(3));
-        flowsData.put(5, new FlowData(5));
+        flowsData.put(0, new FlowData(0, 1));
+        flowsData.put(1, new FlowData(1, 1));
+        flowsData.put(3, new FlowData(3, 1));
+        flowsData.put(5, new FlowData(5, 1));
 
         assertThrows(NoSuchElementException.class,
                 () -> p.getFlowData(-1));
@@ -206,10 +205,10 @@ class ProblemTest {
 
         assertTrue(flowsData.isEmpty());
 
-        flowsData.put(0, new FlowData(0));
-        flowsData.put(1, new FlowData(1));
-        flowsData.put(3, new FlowData(3));
-        flowsData.put(5, new FlowData(5));
+        flowsData.put(0, new FlowData(0, 1));
+        flowsData.put(1, new FlowData(1, 1));
+        flowsData.put(3, new FlowData(3, 1));
+        flowsData.put(5, new FlowData(5, 1));
 
         p.resetFlowsData();
 

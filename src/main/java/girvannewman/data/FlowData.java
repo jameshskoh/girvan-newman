@@ -9,12 +9,13 @@ import java.util.Set;
 
 public class FlowData {
     private final int node;
+    private final int level;
     private final Set<Integer> upstream;
     private final Set<Integer> downstream;
     private int pathCount;
     private double flowCount;
 
-    public FlowData(int node) {
+    public FlowData(int node, int level) {
         if (node < 0) {
             String msg = String.format(
                     "Node must be non-negative, received %d instead",
@@ -22,23 +23,35 @@ public class FlowData {
             throw new IllegalArgumentException(msg);
         }
 
+        if (level <= 0) {
+            String msg = String.format(
+                    "Level must be positive, received %d instead",
+                    node);
+            throw new IllegalArgumentException(msg);
+        }
+
         this.node = node;
+        this.level = level;
         upstream = new HashSet<>();
         downstream = new HashSet<>();
         pathCount = 0;
         flowCount = 0.0;
     }
 
-    public void populateDownstream(Map<Integer, FlowData> flowsData, Set<Integer> nodeNeighbors) {
+    public void populateDownstream(
+            Map<Integer, FlowData> flowsData, Set<Integer> nodeNeighbors,
+            Set<VertexPair> severedPairs) {
         for (int n : nodeNeighbors) {
-            if (!upstream.contains(n)) {
+            VertexPair vp = new VertexPair(node, n);
+
+            if (severedPairs.contains(vp)) continue;
+
+            if (!flowsData.containsKey(n)) {
                 downstream.add(n);
-
-                FlowData fd = new FlowData(n);
-
-                if (!flowsData.containsKey(n)) {
-                    flowsData.put(n, fd);
-                }
+                FlowData fd = new FlowData(n, level + 1);
+                flowsData.put(n, fd);
+            } else if (flowsData.get(n).level == level + 1) {
+                downstream.add(n);
             }
         }
     }
@@ -91,6 +104,10 @@ public class FlowData {
 
     public int getNode() {
         return node;
+    }
+
+    public int getLevel() {
+        return level;
     }
 
     public Set<Integer> getDownstream() {

@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -15,12 +14,23 @@ import static org.junit.jupiter.api.Assertions.*;
 import static util.Constants.EPSILON;
 
 class FlowDataTest {
+    static Stream<Arguments> values() {
+        return Stream.of(
+                Arguments.arguments(0, 1),
+                Arguments.arguments(1, 2),
+                Arguments.arguments(2, 3),
+                Arguments.arguments(100, 4),
+                Arguments.arguments(672850, 34698)
+        );
+    }
+
     @ParameterizedTest
-    @ValueSource(ints = {0, 1, 2, 100, 672850})
-    void ctor_hasCorrectValues(int value) {
-        FlowData fd = new FlowData(value);
+    @MethodSource("values")
+    void ctor_hasCorrectValues(int value, int level) {
+        FlowData fd = new FlowData(value, level);
 
         assertEquals(value, fd.getNode());
+        assertEquals(level, fd.getLevel());
         assertEquals(0, fd.getUpstream().size());
         assertEquals(0, fd.getDownstream().size());
         assertEquals(0, fd.getPathCount());
@@ -30,7 +40,13 @@ class FlowDataTest {
     @Test
     void ctor_negativeValueShouldThrowIAE() {
         assertThrows(IllegalArgumentException.class,
-                () -> new FlowData(-1));
+                () -> new FlowData(-1, 1));
+    }
+
+    @Test
+    void ctor_negativeLevelShouldThrowIAE() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new FlowData(1, -1));
     }
 
     static Stream<Arguments> data() {
@@ -38,6 +54,9 @@ class FlowDataTest {
                 .collect(Collectors.toList());
 
         List<Integer> nodes = Stream.of(0, 1, 2, 3, 4)
+                .collect(Collectors.toList());
+
+        List<Integer> levels = Stream.of(1, 1, 2, 3, 3)
                 .collect(Collectors.toList());
 
         List<Set<Integer>> neighborsSet = Stream.of(
@@ -80,7 +99,7 @@ class FlowDataTest {
 
         return Stream.of(
                 Arguments.arguments(
-                        parentPaths, nodes, neighborsSet,
+                        parentPaths, nodes, levels, neighborsSet,
                         upstreamSet, downstreamSet, pathCounts,
                         flowCounts, betwInc)
         );
@@ -89,14 +108,15 @@ class FlowDataTest {
     @ParameterizedTest
     @MethodSource("data")
     void populateDownstream_shouldAddDownstreamToFlowData(
-            List<Integer> parentPaths, List<Integer> nodes, List<Set<Integer>> neighborsSet,
+            List<Integer> parentPaths, List<Integer> nodes, List<Integer> levels,
+            List<Set<Integer>> neighborsSet,
             List<Set<Integer>> upstreamSet, List<Set<Integer>> downstreamSet,
             List<Integer> pathCounts, List<Double> flowCounts, Map<VertexPair, Double> betwInc) {
         Map<Integer, FlowData> flowsData = new HashMap<>();
 
         // set up parents
         for (int node = 0; node < parentPaths.size(); node++) {
-            FlowData parent = new FlowData(node);
+            FlowData parent = new FlowData(node, 1);
             parent.incPathCount(parentPaths.get(node));
             flowsData.put(node, parent);
         }
@@ -104,7 +124,7 @@ class FlowDataTest {
         // check all nodes from parents to children
         for (int node : nodes) {
             FlowData currNode = flowsData.get(node);
-            currNode.populateDownstream(flowsData, neighborsSet.get(node));
+            currNode.populateDownstream(flowsData, neighborsSet.get(node), new HashSet<>());
             currNode.updateDownstream(flowsData);
 
             assertEquals(downstreamSet.get(node).size(), currNode.getDownstream().size());
@@ -122,21 +142,22 @@ class FlowDataTest {
     @ParameterizedTest
     @MethodSource("data")
     void populateDownstream_shouldAddAllNodesToFlowsData(
-            List<Integer> parentPaths, List<Integer> nodes, List<Set<Integer>> neighborsSet,
+            List<Integer> parentPaths, List<Integer> nodes, List<Integer> levels,
+            List<Set<Integer>> neighborsSet,
             List<Set<Integer>> upstreamSet, List<Set<Integer>> downstreamSet,
             List<Integer> pathCounts, List<Double> flowCounts, Map<VertexPair, Double> betwInc) {
         Map<Integer, FlowData> flowsData = new HashMap<>();
 
         // set up parents
         for (int node = 0; node < parentPaths.size(); node++) {
-            FlowData parent = new FlowData(node);
+            FlowData parent = new FlowData(node, 1);
             parent.incPathCount(parentPaths.get(node));
             flowsData.put(node, parent);
         }
 
         for (int node : nodes) {
             FlowData currNode = flowsData.get(node);
-            currNode.populateDownstream(flowsData, neighborsSet.get(node));
+            currNode.populateDownstream(flowsData, neighborsSet.get(node), new HashSet<>());
             currNode.updateDownstream(flowsData);
         }
 
@@ -150,15 +171,43 @@ class FlowDataTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    void updateDownstream_shouldIncDownstreamPathCount(
-            List<Integer> parentPaths, List<Integer> nodes, List<Set<Integer>> neighborsSet,
+    void populateDownstream_shouldSetCorrectLevel(
+            List<Integer> parentPaths, List<Integer> nodes, List<Integer> levels,
+            List<Set<Integer>> neighborsSet,
             List<Set<Integer>> upstreamSet, List<Set<Integer>> downstreamSet,
             List<Integer> pathCounts, List<Double> flowCounts, Map<VertexPair, Double> betwInc) {
         Map<Integer, FlowData> flowsData = new HashMap<>();
 
         // set up parents
         for (int node = 0; node < parentPaths.size(); node++) {
-            FlowData parent = new FlowData(node);
+            FlowData parent = new FlowData(node, 1);
+            parent.incPathCount(parentPaths.get(node));
+            flowsData.put(node, parent);
+        }
+
+        for (int node : nodes) {
+            FlowData currNode = flowsData.get(node);
+            currNode.populateDownstream(flowsData, neighborsSet.get(node), new HashSet<>());
+            currNode.updateDownstream(flowsData);
+        }
+
+        for (int node : nodes) {
+            assertEquals(levels.get(node), flowsData.get(node).getLevel());
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    void updateDownstream_shouldIncDownstreamPathCount(
+            List<Integer> parentPaths, List<Integer> nodes, List<Integer> levels,
+            List<Set<Integer>> neighborsSet,
+            List<Set<Integer>> upstreamSet, List<Set<Integer>> downstreamSet,
+            List<Integer> pathCounts, List<Double> flowCounts, Map<VertexPair, Double> betwInc) {
+        Map<Integer, FlowData> flowsData = new HashMap<>();
+
+        // set up parents
+        for (int node = 0; node < parentPaths.size(); node++) {
+            FlowData parent = new FlowData(node, 1);
             parent.incPathCount(parentPaths.get(node));
             flowsData.put(node, parent);
         }
@@ -166,7 +215,7 @@ class FlowDataTest {
         // check all nodes from parents to children
         for (int node : nodes) {
             FlowData currNode = flowsData.get(node);
-            currNode.populateDownstream(flowsData, neighborsSet.get(node));
+            currNode.populateDownstream(flowsData, neighborsSet.get(node), new HashSet<>());
             currNode.updateDownstream(flowsData);
 
             assertEquals(pathCounts.get(node), currNode.getPathCount());
@@ -176,14 +225,15 @@ class FlowDataTest {
     @ParameterizedTest
     @MethodSource("data")
     void updateDownstream_downstreamShouldAddSelfAsUpstream(
-            List<Integer> parentPaths, List<Integer> nodes, List<Set<Integer>> neighborsSet,
+            List<Integer> parentPaths, List<Integer> nodes, List<Integer> levels,
+            List<Set<Integer>> neighborsSet,
             List<Set<Integer>> upstreamSet, List<Set<Integer>> downstreamSet,
             List<Integer> pathCounts, List<Double> flowCounts, Map<VertexPair, Double> betwInc) {
         Map<Integer, FlowData> flowsData = new HashMap<>();
 
         // set up parents
         for (int node = 0; node < parentPaths.size(); node++) {
-            FlowData parent = new FlowData(node);
+            FlowData parent = new FlowData(node, 1);
             parent.incPathCount(parentPaths.get(node));
             flowsData.put(node, parent);
         }
@@ -191,7 +241,7 @@ class FlowDataTest {
         // check all nodes from parents to children
         for (int node : nodes) {
             FlowData currNode = flowsData.get(node);
-            currNode.populateDownstream(flowsData, neighborsSet.get(node));
+            currNode.populateDownstream(flowsData, neighborsSet.get(node), new HashSet<>());
             currNode.updateDownstream(flowsData);
 
             assertEquals(upstreamSet.get(node).size(), currNode.getUpstream().size());
@@ -209,14 +259,15 @@ class FlowDataTest {
     @ParameterizedTest
     @MethodSource("data")
     void incUpstreamFlow_shouldUpdateUpstreamFlowAndReturnCorrectBetwInc(
-            List<Integer> parentPaths, List<Integer> nodes, List<Set<Integer>> neighborsSet,
+            List<Integer> parentPaths, List<Integer> nodes, List<Integer> levels,
+            List<Set<Integer>> neighborsSet,
             List<Set<Integer>> upstreamSet, List<Set<Integer>> downstreamSet,
             List<Integer> pathCounts, List<Double> flowCounts, Map<VertexPair, Double> betwInc) {
         Map<Integer, FlowData> flowsData = new HashMap<>();
 
         // set up parents
         for (int node = 0; node < parentPaths.size(); node++) {
-            FlowData parent = new FlowData(node);
+            FlowData parent = new FlowData(node, 1);
             parent.incPathCount(parentPaths.get(node));
             flowsData.put(node, parent);
         }
@@ -224,7 +275,7 @@ class FlowDataTest {
         // check all nodes from parents to children
         for (int node : nodes) {
             FlowData currNode = flowsData.get(node);
-            currNode.populateDownstream(flowsData, neighborsSet.get(node));
+            currNode.populateDownstream(flowsData, neighborsSet.get(node), new HashSet<>());
             currNode.updateDownstream(flowsData);
         }
 

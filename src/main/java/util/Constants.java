@@ -1,5 +1,5 @@
 package util;
 
 public class Constants {
-    public static final double EPSILON = 0.00000001d;
+    public static final double EPSILON = 1E-7d;
 }

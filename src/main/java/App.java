@@ -19,7 +19,7 @@ public class App {
 
         Graph g = new Graph();
         try {
-            GraphLoader.loadGraph(g, "data/facebook_ucsd_1500.edge");
+            GraphLoader.loadGraph(g, "data/7-node.edge");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
